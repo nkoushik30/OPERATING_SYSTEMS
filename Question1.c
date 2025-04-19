@@ -1,28 +1,43 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <dirent.h>
+#include <stdlib.h>
+#include <unistd.h>     // for fork(), getpid()
+#include <dirent.h>     // for opendir(), readdir()
+#include <sys/types.h>  // for DIR, struct dirent
 
 int main() {
-    pid_t pid = fork();  // Create a new process
+    pid_t pid;
+
+    pid = fork();  // Create a new process
 
     if (pid < 0) {
-        perror("Fork failed");
-    } else if (pid == 0) {
-        printf("Child Process: PID = %d, Parent PID = %d\n", getpid(), getppid());
-    } else {
-        printf("Parent Process: PID = %d, Child PID = %d\n", getpid(), pid);
-    }
-    DIR *dir;
-    struct dirent *entry;
-    dir = opendir(".");
-    if (dir == NULL) {
-        perror("opendir failed");
+        printf("fork failed");
         return 1;
     }
-    printf("Contents of current directory:\n");
-    while ((entry = readdir(dir)) != NULL) {
-        printf("%s\n", entry->d_name);
+    else if (pid == 0) {
+        // Child process
+        printf("Child Process:\n");
+        printf("Child PID: %d\n", getpid());
+
+        DIR *d;
+        struct dirent *dir;
+
+        d = opendir(".");  // Open current directory
+
+        if (d) {
+            printf("Files in current directory:\n");
+            while ((dir = readdir(d)) != NULL) {
+                printf("%s\n", dir->d_name);
+            }
+            closedir(d);
+        } else {
+            printf("opendir failed");
+        }
     }
-    closedir(dir);
+    else {
+        // Parent process
+        printf("Parent Process:\n");
+        printf("Parent PID: %d\n", getpid());
+    }
+
     return 0;
 }
